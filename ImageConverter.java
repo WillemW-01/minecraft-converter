@@ -7,14 +7,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.awt.Color;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ImageConverter {
 
-  private static ArrayList<String> textureNames = new ArrayList<>();
-  private static ArrayList<Color> textureColors = new ArrayList<>();
   private static List<Texture> textures;
   // private static ArrayList<Integer> textureColorValues = new ArrayList<>();
   private static String[][] writtenPicture;
