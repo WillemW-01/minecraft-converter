@@ -14,11 +14,11 @@ requires a Java enviroment (v8+) to run.
 
 **Compile**:
 
-`javac *.java`
+`javac -cp libs/*.jar -d bin *.java`
 
 **Run**:
 
-`java ImageConverter <input_image_path>`
+`java -cp libs/*.jar;bin ImageConverter <input_image_path>`
 
 ## Notes
 
