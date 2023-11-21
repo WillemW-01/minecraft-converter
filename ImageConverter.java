@@ -1,30 +1,53 @@
 import princeton.Picture;
-import princeton.StdIn;
 import princeton.In;
+import princeton.StdIn;
 import princeton.StdDraw;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.awt.Color;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ImageConverter {
 
   private static ArrayList<String> textureNames = new ArrayList<>();
   private static ArrayList<Color> textureColors = new ArrayList<>();
-  private static ArrayList<Integer> textureColorValues = new ArrayList<>();
-  private static ArrayList<Picture> textures = new ArrayList<>();
+  private static List<Texture> textures;
+  // private static ArrayList<Integer> textureColorValues = new ArrayList<>();
   private static String[][] writtenPicture;
 
+  /**
+   * This function reads in all the texture data from the json file and saves
+   * them as an array of Texture objects.
+   * 
+   */
   public static void fetchTextureData() {
-    In fileNames = new In("filenames.txt");
-    while (fileNames.hasNextLine()) {
-      String[] str = fileNames.readLine().split(",");
-      textureNames.add(str[0]);
-      int r = Integer.parseInt(str[1]), g = Integer.parseInt(str[2]), b = Integer.parseInt(str[3]);
-      textureColors.add(new Color(r, g, b));
-      textureColorValues.add(r + b + g);
-      textures.add(new Picture("textures/" + str[0]));
+    String inputFile = new In("texture_colors.json").readAll();
+    inputFile = inputFile.replace("\n", "");
+    ObjectMapper objectMapper = new ObjectMapper();
+    try {
+      textures = objectMapper.readValue(inputFile, new TypeReference<List<Texture>>() {
+      });
+    } catch (Exception e) {
+      System.out.println("look at this: " + e.toString());
+      System.exit(1);
     }
   }
 
+  /**
+   * This function converts a pixture's pixels to Minecraft blocks. It first
+   * rescales the picture to the new dimensions set by the user, and then
+   * after that it will replace each pixel with the most appropriate
+   * Minecraft block.
+   * 
+   * @param original
+   * @param totalWidth
+   * @param totalHeight
+   * @return
+   */
   public static Picture convertPicture(Picture original, int totalWidth, int totalHeight) {
     int scaling_factor = ImageReducer.fitToLength(original, totalWidth, totalHeight);
     Picture reducedImage = ImageReducer.reduceImage(scaling_factor, original);
@@ -54,10 +77,17 @@ public class ImageConverter {
     }
     System.out.println();
     StdDraw.show();
-    StdDraw.save("picture.png");
-    return new Picture("picture.png");
+    StdDraw.save("output-picture.png");
+    return new Picture("output-picture.png");
   }
 
+  /**
+   * This function determines what size the drawing canvas should be for printing.
+   * 
+   * @param w
+   * @param h
+   * @return
+   */
   public static int[] resize(int w, int h) {
     double ratio = 1;
     if (h == w && h > 800) {
@@ -83,17 +113,21 @@ public class ImageConverter {
     return new int[] { w, h };
   }
 
+  /**
+   * This function finds the Minecraft block that most closely resembles the
+   * current pixel color
+   * 
+   * @param c
+   * @return
+   */
   public static String findMatch(Color c) {
     int min = Integer.MAX_VALUE;
     String bestBlock = "";
-    for (int i = 0; i < textureColors.size(); i++) {
-      Color current = textureColors.get(i);
-      int difference = Math.abs(c.getRed() - current.getRed()) +
-          Math.abs(c.getGreen() - current.getGreen()) +
-          Math.abs(c.getBlue() - current.getBlue());
-      if (difference < min) {
-        min = difference;
-        bestBlock = textureNames.get(i);
+    for (int i = 0; i < textures.size(); i++) {
+      int distance = textures.get(i).getDistance(c, min);
+      if (distance < min) {
+        min = distance;
+        bestBlock = textures.get(i).getName();
       }
     }
     if (min == -1)
@@ -102,23 +136,24 @@ public class ImageConverter {
       return bestBlock;
   }
 
-  public static boolean fallsInRange(int value, int lo, int hi) {
-    return value <= hi && value >= lo;
-  }
-
   public static void main(String[] args) {
     fetchTextureData();
+
     String path = args[0];
-    System.out.println(path);
     Picture original = new Picture(path);
+
     System.out.println("Enter the dimensions of your picture in the format: widthxheight");
     System.out.println("Current dimensions: " + original.width() + "x" + original.height());
     String[] dimensions = StdIn.readString().split("x");
+
     int width = Integer.parseInt(dimensions[0]);
     int height = Integer.parseInt(dimensions[1]);
+
     int size = ImageReducer.fitToLength(original, width, height);
+
     Picture reducedImage = ImageReducer.reduceImage(size, path);
     reducedImage.show();
+
     convertPicture(original, width, height).show();
   }
 }
