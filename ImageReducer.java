@@ -4,6 +4,50 @@ import java.awt.Color;
 
 public class ImageReducer {
 
+  /**
+   * Takes the input picture, and determines how many times it reduced a group
+   * of 3x3 pixels
+   * 
+   * @param picture
+   * @param targetWidth
+   * @param targetHeight
+   * @return
+   */
+  public static int fitToLength(Picture picture, int targetWidth, int targetHeight) {
+    int width = picture.width();
+    int width_1 = width;
+    int height = picture.height();
+    int height_1 = height;
+    if ((width > height && targetWidth < targetHeight) || (width < height && targetWidth > targetHeight)) {
+      throw new IllegalArgumentException("Error in dimension proportions: original picture is " + width + " x " + height
+          + ", but target is " + targetWidth + " x " + targetHeight);
+    }
+
+    // checks if the ratios are not close enough to each other
+    double widthRatio = (double) width / (double) targetWidth;
+    double heightRatio = (double) height / (double) targetHeight;
+    System.out.printf("Ratios wxh: %f, %f, diff: %f", widthRatio, heightRatio, widthRatio - heightRatio);
+    double epsilon = 0.1;
+
+    if (Math.abs(widthRatio - heightRatio) > epsilon) {
+      throw new IllegalArgumentException(
+          "Error: original dimensions are not of a proper scaling factor from target dimensions.");
+    }
+
+    // starts with the original sizes each time, and checks each time if the
+    // scaling factor is enough to reduce it down to the target size
+    // e.g., it will first try to reduce by 2, then by 3, then by 4.
+    int length = 1;
+    while (width > targetWidth | height > targetHeight) {
+      width = width_1;
+      height = height_1;
+      length++;
+      width = reduce(width, length);
+      height = reduce(height, length);
+    }
+    return length;
+  }
+
   // reduces the image's resolution determined by the gridsize used around each
   // pixel
   // in the grid used for reduction
@@ -37,15 +81,6 @@ public class ImageReducer {
           }
         }
 
-        // second pass is to fill the grids with the average color value of the
-        // grid
-        // for (int k = i-halfSize; k <= i+halfSize; k++) {
-        // for (int l = j-halfSize; l <= j+halfSize; l++) {
-        // if (isWithinBorder(k, height) && isWithinBorder(l, width)) {
-        // newPicture.set(l, k, new Color(r/count, g/count, b/count));
-        // }
-        // }
-        // }
         newPicture.set(j_, i_, new Color(r / count, g / count, b / count));
         j_++;
       }
@@ -67,30 +102,6 @@ public class ImageReducer {
 
   public static boolean isWithinBorder(int i, int length) {
     return i >= 0 && i < length;
-  }
-
-  public static int fitToLength(Picture picture, int targetWidth, int targetHeight) {
-    int width = picture.width();
-    int width_1 = width;
-    int height = picture.height();
-    int height_1 = height;
-    if ((width > height && targetWidth < targetHeight) || (width < height && targetWidth > targetHeight)) {
-      throw new IllegalArgumentException("Error in dimension proportions: original picture is " + width + " x " + height
-          + ", but target is " + targetWidth + " x " + targetHeight);
-    }
-    if ((double) (width / targetWidth) != (double) (height / targetHeight)) {
-      throw new IllegalArgumentException(
-          "Error: original dimensions are not of a proper scaling factor from target dimensions.");
-    }
-    int length = 1;
-    while (width > targetWidth | height > targetHeight) {
-      width = width_1;
-      height = height_1;
-      length++;
-      width = reduce(width, length);
-      height = reduce(height, length);
-    }
-    return length;
   }
 
   public static Picture enlargeImage(Picture original, int factor) {
@@ -130,29 +141,6 @@ public class ImageReducer {
     System.out.println("Image Size: " + newPicture.width() + " x " + newPicture.height() + "\t| Grid size: " + size);
     newPicture.show();
     enlargeImage(newPicture, 5).show();
-
-    // TEST MAIN FUNCTION
-    // String path = "symbol.jpg";
-    // Picture original = new Picture(path);
-    // int width = original.width();
-    // int height = original.height();
-    // original.show();
-    // int size = 0;
-    // System.out.println("Enter number for the size of the grid (eg 3 for 3x3), or
-    // else \"stop\" to stop");
-    // while (!StdIn.isEmpty()) {
-    // String readString = StdIn.readString().toLowerCase();
-    // if (readString.equals("stop")) {
-    // break;
-    // } else {
-    // size += Integer.parseInt(readString);
-    // System.out.println("Image Size: "+reduce(width, size)+" x "+reduce(height,
-    // size)+"\t| Grid size: "+size);
-    // reduceImage(size, path).show();
-    // System.out.println("Enter new number to add to current gridSize, or else
-    // \"stop\" to stop");
-    // }
-    // }
   }
 
 }

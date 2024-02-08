@@ -126,25 +126,29 @@ public class ImageConverter {
         bestBlock = textures.get(i).getName();
       }
     }
-    if (min == -1)
+    if (min == Integer.MAX_VALUE) {
       return null;
-    else
+    } else {
       return bestBlock;
+    }
   }
 
   public static void main(String[] args) {
+    // load textures in memory
     fetchTextureData();
 
     String path = args[0];
     Picture original = new Picture(path);
 
-    System.out.println("Enter the dimensions of your picture in the format: widthxheight");
-    System.out.println("Current dimensions: " + original.width() + "x" + original.height());
+    // get target dimensions
+    System.out.println("Enter the dimensions of your picture in the format: <width>x<height>");
+    System.out.printf("Current dimensions: %dx%d\n", original.width(), original.height());
     String[] dimensions = StdIn.readString().split("x");
 
     int width = Integer.parseInt(dimensions[0]);
     int height = Integer.parseInt(dimensions[1]);
 
+    // get the new target size based on the image
     int size = ImageReducer.fitToLength(original, width, height);
 
     Picture reducedImage = ImageReducer.reduceImage(size, path);
